@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.link {
+  stroke: #000;
+  stroke-width: 1.5px;
+}
+
+.node {
+  fill: #000;
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+
+.node.a { fill: #1f77b4; }
+.node.b { fill: #ff7f0e; }
+.node.c { fill: #2ca02c; }
+
+#pause-btn, #show-form-btn {
+	position: absolute;
+	z-index: 2;
+	top: 1px;
+}
+
+#show-form-btn {
+	left: 1px;
+}
+
+#pause-btn {
+	left: 50px;
+  display: none;
+}
+
+#generator-form {
+	z-index: 1;
+	max-width: 100%;
+	width: 400px;
+	border-style: solid;
+	border-color: #666;
+	background: #eee;
+	border-width: 0px 1px 1px 0;
+	position: absolute;
+	top: 0;
+	padding: 40px 10px 0;
+	left: 0;
+	border-bottom-right-radius: 5px;
+}
+
+</style>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+<body>
+  <a href="#" class="btn btn-primary" id="show-form-btn"><span class="glyphicon glyphicon-menu-hamburger"></span></a>
+  <a href="#" class="btn btn-warning" id="pause-btn"><span class="glyphicon glyphicon-pause"></span></a>
+  <form id="generator-form" class="form-horizontal">
+		<fieldset>
+
+		<!-- Form Name -->
+		<!--<legend>Form Name</legend>-->
+
+		<!-- Multiple Radios (inline) -->
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="step_type">Steps</label>
+			<div class="col-md-10"> 
+				<label class="radio-inline" for="step_type-0">
+					<input type="radio" name="step_type" id="step_type-0" value="deterministic" checked="checked">
+					Deterministic
+				</label> 
+				<label class="radio-inline" for="step_type-1">
+					<input type="radio" name="step_type" id="step_type-1" value="stochastic">
+					Stochastic (1 or 2)
+				</label>
+			</div>
+		</div>
+
+		<!-- Text input-->
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="step_value"></label>
+			<div class="col-md-10">
+			<input id="step_value" name="step_value" type="text" placeholder="p or s" class="form-control input-md">
+				
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-md-2 control-label" for="submit"></label>
+			<div class="col-md-10">
+				<button id="submit" name="submit" class="btn btn-primary">Generate</button>
+			</div>
+		</div>
+
+		</fieldset>
+  </form>
+<script src="//d3js.org/d3.v3.min.js"></script>
+<script>
+
+
+var svg = d3.select("body").append("svg")
+            .attr("width", window.innerWidth)
+            .attr("height", window.innerHeight);
+
+Array.prototype.replace = function replace(source){
+	this.splice.apply(this,[0,this.length].concat(source))
+}
+
+function GraphVis(svg){
+  var graph = Graph();
+
+	var color = d3.scale.category10();
+
+	var nodes = [],
+			links = [];
+
+	var force = d3.layout.force()
+			.nodes(nodes)
+			.links(links)
+			.charge(-120)
+			.linkDistance(50)
+			.size([+svg.attr("width"), +svg.attr("height")])
+			.on("tick", tick);
+
+
+	var node = svg.selectAll(".node"),
+			link = svg.selectAll(".link");
+
+	function update() {
+		link = link.data(force.links());
+		link.enter().insert("line", ".node").attr("class", "link");
+		link.exit().remove();
+
+		node = node.data(force.nodes());
+		node.enter().append("circle").attr("class","node").attr("r", 5);
+		node.exit().remove();
+    node.call(force.drag);
+
+		force.start();
+	}
+
+	function tick() {
+		node.attr("cx", function(d) { return d.x; })
+				.attr("cy", function(d) { return d.y; })
+
+		link.attr("x1", function(d) { return d.source.x; })
+				.attr("y1", function(d) { return d.source.y; })
+				.attr("x2", function(d) { return d.target.x; })
+				.attr("y2", function(d) { return d.target.y; });
+	}
+
+  function updateDegree(node){
+    nodes[node].degree = graph.getNeighbors(node).length;
+  }
+
+  return {
+    addEdge: function(from, to){
+      graph.addEdge(from, to);
+      links.push({source: from, target: to});
+
+      updateDegree(from);
+      updateDegree(to);
+      update();
+    },
+    addNode: function(from, to){
+      var node = graph.addNode();
+      nodes.push({degree: 0});
+      update();
+      return node;
+    },
+    resize: function(width, height){
+      force.size([width, height]);
+      force.start();
+    },
+    reset: function(){
+      graph.reset();
+      nodes.replace([]);
+      links.replace([]);
+      update();
+    },
+    getNeighbors: graph.getNeighbors
+  };
+}
+
+function Graph(_directed){
+  var directed = !!_directed;
+  var edgeList = [];
+
+  return {
+    order: function() { return edgeList.length; },
+    addNode: function() {
+      edgeList.push([]);
+      return edgeList.length-1;
+    },
+    addEdge: function(from, to) {
+      edgeList[from].push(to);
+      if(!directed && to != from){
+        edgeList[to].push(from);
+      }
+    },
+    getNeighbors: function(node){
+      return edgeList[node];
+    },
+    reset: function(){
+      edgeList = [];
+    }
+  };
+}
+
+function pSteps(p){
+  return function(){
+    if(Math.random() > p) {
+      return 2;
+    }
+    return 1;
+  }
+}
+
+function sSteps(s){
+  return function(){ return s };
+}
+
+function Generator(graph, period){
+  var interval;
+
+  function run(howManyStepsFn){
+    stop();
+    graph.reset();
+    graph.addNode();
+    graph.addEdge(0,0); // Add the self loop
+    var walkerPos = 0;
+
+    function step(){
+      var neighbors = graph.getNeighbors(walkerPos);
+      walkerPos = neighbors[Math.floor(Math.random()*neighbors.length)];
+    }
+
+    interval = window.setInterval(function(){
+      for (var i = 0; i < howManyStepsFn(); i++) step();
+      // Take another step with probability 1-p
+
+      graph.addEdge(walkerPos,graph.addNode());
+    }, period);
+  }
+
+  function stop(){
+    window.clearInterval(interval);
+  }
+
+  return {
+    run: run,
+    stop: stop
+  }
+}
+
+
+function updateDimensions(){
+  var width = window.innerWidth,
+      height = window.innerHeight;
+
+  svg.attr("width", width).attr("height", height);
+  graph.resize(width,height);
+}
+
+window.onresize = updateDimensions;
+
+var graph = GraphVis(svg);
+var generator = Generator(graph, 300);
+
+var pauseBtn = document.getElementById("pause-btn");
+
+var showFormBtn = document.getElementById("show-form-btn");
+showFormBtn.onclick = function(e){
+	e.preventDefault();
+  generatorForm.style.display = window.getComputedStyle(generatorForm).display == "none" ? "block" : "none";
+}
+var generatorForm = document.getElementById("generator-form");
+generatorForm.onsubmit = function(e){
+  window.lastevent = e;
+  var step_type = e.target.elements.step_type.value;
+  var step_value = e.target.elements.step_value.value;
+
+  var val = parseFloat(step_value);
+  if(isNaN(val)){
+    alert("Invalid value");
+    return;
+  }
+
+  if(step_type == "deterministic"){
+    generator.run(sSteps(Math.floor(val)));
+  } else {
+    generator.run(pSteps(val));
+  }
+
+  e.target.elements.step_value.value = val;
+  generatorForm.style.display = "none";
+  pauseBtn.style.display = "block";
+  e.preventDefault();
+}
+
+pauseBtn.onclick = function(e){
+  e.preventDefault();
+  generator.stop();
+  pauseBtn.style.display = "none";
+}
+
+</script>
+</body>

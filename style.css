@@ -1,0 +1,50 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.link {
+  stroke: #000;
+  stroke-width: 1.5px;
+  fill: transparent;
+}
+
+.node {
+  stroke: #FFF;
+  stroke-width: 1.5px;
+}
+
+.node.a { fill: #1f77b4; }
+.node.b { fill: #ff7f0e; }
+.node.c { fill: #2ca02c; }
+
+#pause-btn, #show-form-btn {
+	position: absolute;
+	z-index: 2;
+	top: 1px;
+}
+
+#show-form-btn {
+	left: 1px;
+}
+
+#pause-btn {
+	left: 50px;
+  display: none;
+}
+
+#generator-form {
+	z-index: 1;
+	max-width: 100%;
+	width: 400px;
+	border-style: solid;
+	border-color: #666;
+	background: #eee;
+	border-width: 0px 1px 1px 0;
+	position: absolute;
+	top: 0;
+	padding: 40px 10px 0;
+	left: 0;
+	border-bottom-right-radius: 5px;
+}

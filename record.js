@@ -1,11 +1,14 @@
 var page = require('webpage').create();
 page.viewportSize = { width: 1024, height: 768 };
 
+var system = require('system');
+var args = system.args;
+
 page.open(
-  'http://www.land.ufrj.br/~bamorim/generator/#s=2&speed_0=2&speed_10=50&speed_100=200',
+  args[1],
   function(){
     setInterval(function(){
       page.render('/dev/stdout', { format: 'png' });
-    },25);
+    },30); // 1000/30 == 33.3, using 30 for little faster replay
   }
 );

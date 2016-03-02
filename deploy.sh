@@ -1,2 +1,4 @@
 #!/bin/sh
-scp index.html icarai:/home/bamorim/public_html/generator/index.html
+inliner index.html -m > compiled.html
+scp compiled.html icarai:/home/bamorim/public_html/generator/index.html
+rm compiled.html

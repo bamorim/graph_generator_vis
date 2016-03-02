@@ -155,11 +155,20 @@ function addEdge(from, to){
   links.push({source: from, target: to});
   nodes[from].degree++;
   nodes[to].degree++;
+
+
+  document.dispatchEvent(new CustomEvent('edgeAdded', { 'detail': {
+    from: from,
+    to: to
+  }}));
 }
 
 function addNode(from, to){
   var node = graph.addNode();
   nodes.push({degree: 0});
+  document.dispatchEvent(new CustomEvent('nodeAdded', { 'detail': {
+    size: nodes.length
+  }}));
   return node;
 }
 
@@ -167,6 +176,7 @@ function reset(){
   graph.reset();
   nodes.replace([]);
   links.replace([]);
+  document.dispatchEvent(new Event('graphReseted'))
   update();
 }
 
@@ -355,3 +365,38 @@ function updateDimensions(){
   force.size([width, height]);
   force.start();
 }
+
+// Get instructions from
+(function(){
+  var instructions = location.hash.slice(1).split("&").filter(function(x){ return x.length > 0; });
+
+  if(instructions.length > 0){
+    hideInstructions();
+    Config.autozoom = true;
+  }
+
+  instructions.forEach(function(instruction){
+    var name = instruction.split("=")[0];
+    var arg = instruction.split("=")[1];
+    if(name == "s"){
+      run(sSteps(parseInt(arg)));
+    } else if(name == "p") {
+      run(pSteps(parseFloat(arg)));
+    } else if(name.match(/^speed_\d+$/)){
+      var point = parseInt(name.split("_")[1]);
+      var speed = parseInt(arg);
+      if(point == 0){
+        Scheduler.frequency = speed;
+      } else {
+        (function(){
+          var listener = document.addEventListener('nodeAdded', function(evt){
+            if(evt.detail.size == point) {
+              Scheduler.frequency = speed;
+              document.removeEventListener(listener);
+            }
+          });
+        })()
+      }
+    }
+  })
+})()

@@ -19,32 +19,18 @@ html, body {
 .node.b { fill: #ff7f0e; }
 .node.c { fill: #2ca02c; }
 
-#pause-btn, #show-form-btn {
-	position: absolute;
-	z-index: 2;
-	top: 1px;
+#instructions {
+  position: absolute;
+  left: 50%;
+  top: 100px;
+  margin-left: -180px;
+  width: 360px;
+  border: 1px solid;
+  padding: 20px;
+  border-radius: 10px;
+  transition: all 200ms;
 }
 
-#show-form-btn {
-	left: 1px;
-}
-
-#pause-btn {
-	left: 50px;
-  display: none;
-}
-
-#generator-form {
-	z-index: 1;
-	max-width: 100%;
-	width: 400px;
-	border-style: solid;
-	border-color: #666;
-	background: #eee;
-	border-width: 0px 1px 1px 0;
-	position: absolute;
-	top: 0;
-	padding: 40px 10px 0;
-	left: 0;
-	border-bottom-right-radius: 5px;
+#instructions h2 {
+  text-align: center;
 }

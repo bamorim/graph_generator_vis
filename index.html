@@ -1,49 +1,24 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <link rel="stylesheet" href="style.css"/>
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+<link rel="stylesheet" href="css/alertify.min.css"/>
+<link rel="stylesheet" href="css/bootstrap.min.css"/>
+<link rel="stylesheet" href="css/themes/default.min.css"/>
 <body>
-  <a href="#" class="btn btn-primary" id="show-form-btn"><span class="glyphicon glyphicon-menu-hamburger"></span></a>
-  <a href="#" class="btn btn-warning" id="pause-btn"><span class="glyphicon glyphicon-pause"></span></a>
-  <form id="generator-form" class="form-horizontal">
-		<fieldset>
-
-		<!-- Form Name -->
-		<!--<legend>Form Name</legend>-->
-
-		<!-- Multiple Radios (inline) -->
-		<div class="form-group">
-			<label class="col-md-2 control-label" for="step_type">Steps</label>
-			<div class="col-md-10"> 
-				<label class="radio-inline" for="step_type-0">
-					<input type="radio" name="step_type" id="step_type-0" value="deterministic" checked="checked">
-					Deterministic
-				</label> 
-				<label class="radio-inline" for="step_type-1">
-					<input type="radio" name="step_type" id="step_type-1" value="stochastic">
-					Stochastic (1 or 2)
-				</label>
-			</div>
-		</div>
-
-		<!-- Text input-->
-		<div class="form-group">
-			<label class="col-md-2 control-label" for="step_value"></label>
-			<div class="col-md-10">
-			<input id="step_value" name="step_value" type="text" placeholder="p or s" class="form-control input-md">
-				
-			</div>
-		</div>
-
-		<div class="form-group">
-			<label class="col-md-2 control-label" for="submit"></label>
-			<div class="col-md-10">
-				<button id="submit" name="submit" class="btn btn-primary">Generate</button>
-			</div>
-		</div>
-
-		</fieldset>
-  </form>
+  <div id="instructions">
+    <h2>Instructions</h2>
+    <ul>
+      <li><b>A</b>: Toggle Autozoom</li>
+      <li><b>S</b>: Start stochastic simulation</li>
+      <li><b>D</b>: Start deterministic simulation</li>
+      <li><b>P</b>: Pause/Resume</li>
+      <li><b>Z</b>: Fit To Screen</li>
+      <li><b>?</b>: Toggle instructions</li>
+      <li><b>Arrow Left</b>: Decreases frequency</li>
+      <li><b>Arrow Right</b>: Increases frequency</li>
+    </ul>
+  </div>
 <script src="https://d3js.org/d3.v3.min.js"></script>
+<script src="alertify.min.js"></script>
 <script src="script.js"></script>
 </body>

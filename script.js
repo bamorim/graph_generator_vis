@@ -219,18 +219,20 @@ function step(){
   update();
 }
 
-function cycle(howManyStepsFn){
+function cycle(model){
   return function(){
-    for (var i = 0; i < howManyStepsFn(); i++) Scheduler.push(step);
-    Scheduler.push(function(){
-      addEdge(walkerPos,addNode());
-      update();
-    });
-    Scheduler.push(cycle(howManyStepsFn));
+    for (var i = 0; i < model.steps(); i++) Scheduler.push(step);
+    if(model.shouldAddNode()) {
+      Scheduler.push(function(){
+        addEdge(walkerPos,addNode());
+        update();
+      });
+    }
+    Scheduler.push(cycle(model));
   }
 }
 
-function run(howManyStepsFn){
+function run(model){
   console.log("Starting");
   Scheduler.stop();
 
@@ -240,25 +242,35 @@ function run(howManyStepsFn){
   addEdge(0,0); // Add the self loop
   update();
 
-  Scheduler.push(cycle(howManyStepsFn));
+  Scheduler.push(cycle(model));
   Scheduler.start();
 }
 
-// Factory for returning how many steps each time, deterministically or stochastically
-function pSteps(p){
-  return function(){
-    if(Math.random() > p) {
-      return 2;
-    }
-    return 1;
-  }
-}
+// Models
+let models = []
+const model = (text, param, parser, getConfig) => models.push({
+  text,
+  getConfig,
+  parser,
+  param
+})
 
-function sSteps(s){
-  return function(){ return s };
-}
+model("One Or Two", "p", parseFloat, (p) => ({
+  steps: () => (Math.random() > p) ? 2 : 1,
+  shouldAddNode: () => true
+}))
 
-// User Interface 
+model("S Steps", "s", parseInt, (s) => ({
+  steps: () => s,
+  shouldAddNode: () => true
+}))
+
+model("Add Or Not", "p", parseFloat, (p) => ({
+  steps: () => 1,
+  shouldAddNode: () => Math.random() <= p
+}))
+
+// User Interface
 
 var instructions = document.getElementById("instructions");
 var instructionTimeout;
@@ -287,48 +299,61 @@ function toggleInstructions(){
   }
 }
 
-function onKeyPress(e){
-  switch(e.keyCode){
-    case 97: // a
-      Config.autozoom = !Config.autozoom;
-      alertify.notify('Autozoom is now set to ' + Config.autozoom);
-      break;
-    case 115: // s
-      alertify.prompt("Start a stochastic session with p=", "", function(evt, p){
-        p = parseFloat(p);
+let uiActions = {}
+const uiAction = (keyCode, fn) => uiActions[keyCode] = fn
 
-        if(isNaN(p)) return alertify.error("Invalid p value");
 
-        hideInstructions();
-        run(pSteps(p));
-      });
-      break;
-    case 100: // d
-      alertify.prompt("Start a deterministic session with s=", "", function(evt, s){
-        s = parseInt(s);
-
-        if(isNaN(s)) return alertify.error("Invalid s value");
-
-        hideInstructions();
-        run(sSteps(s));
-      });
-      break;
-    case 112: // p
-      if (Scheduler.paused) {
-        alertify.success('Resumed');
-        Scheduler.resume();
-      } else {
-        alertify.notify('Paused');
-        Scheduler.pause();
-      }
-      break;
-    case 122: // z
-      autozoom();
-      break;
-    case 63: // ?
-      toggleInstructions();
-      break;
+uiAction(122, autozoom) // z
+uiAction(63, toggleInstructions) // ?
+uiAction(97, () => { // a
+  Config.autozoom = !Config.autozoom;
+  alertify.notify('Autozoom is now set to ' + Config.autozoom);
+})
+uiAction(112, () => { // p
+  console.log("YO")
+  if (Scheduler.paused) {
+    alertify.success('Resumed');
+    Scheduler.resume();
+  } else {
+    alertify.notify('Paused');
+    Scheduler.pause();
   }
+})
+uiAction(115, () => { // s
+  alertify.selectModel("Select a model to run")
+})
+
+alertify.dialog('selectModel', function factory() {
+  return {
+    main: function(message){
+      this.message = message;
+    },
+    setup: function(){
+      return {
+        buttons: Object.keys(models).map((key) => models[key])
+      };
+    },
+    prepare: function(){
+      this.setContent(this.message);
+    },
+    callback: function(closeEvent){
+      let model = closeEvent.button
+      let msg = "Start " + model.text + " model. " + model.param + "="
+      alertify.prompt(msg, "", function(evt, s) {
+        let a = model.parser(s)
+
+        if(isNaN(a)) return alertify.error("Invalid value")
+
+        hideInstructions();
+        run(model.getConfig(a))
+      })
+    }
+  }
+})
+
+function onKeyPress(e){
+  let action = uiActions[e.keyCode]
+  action && action()
 }
 
 function onKeyDown(e){
